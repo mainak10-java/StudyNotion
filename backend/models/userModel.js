@@ -34,6 +34,12 @@ const userSchema = new mongoose.Schema({
         type : Number,
         trim : true
     },
+    token : {
+        type : String
+    },
+    expiresIn : {
+        type : Date
+    },
     courses : [
         {
             type : mongoose.Schema.Types.ObjectId,

@@ -217,9 +217,7 @@ exports.changePassword = async(req, res) => {
             }
 
             const hashedPassword = await bcrypt.hash(newPassword, 10);
-            const updated = await User.findOneAndUpdate({
-                password : hashedPassword
-            })
+            const updated = await User.findOneAndUpdate({email: email},{ password : hashedPassword}, {new : true});
 
             res.status(200).json({
                 success : true,

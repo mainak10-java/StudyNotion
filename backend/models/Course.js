@@ -6,7 +6,7 @@ const courseSchema = new mongoose.Schema({
         required : true,
         trim : true
     },
-    description : {
+    courseDescription : {
         type : String,
         required : true,
         trim : true
@@ -18,7 +18,7 @@ const courseSchema = new mongoose.Schema({
     price : {
         type : Number
     },
-    intructor : {
+    instructor : {
         type : mongoose.Schema.Types.ObjectId,
         ref : 'User',
         required : true
@@ -30,6 +30,9 @@ const courseSchema = new mongoose.Schema({
             required : true
         }
     ],
+    whatYouWillLearn : {
+        type : String,
+    },
     author : {
         type : String
     },
@@ -50,11 +53,13 @@ const courseSchema = new mongoose.Schema({
             ref : 'RatingAndReview'
         }
     ],
-    studentsEnrolled: [{
+    studentsEnrolled: [
+        {
         type:mongoose.Schema.Types.ObjectId,
         required:true,
         ref:"User",
-    }]
+        }
+    ]
 })
 
 module.exports = mongoose.model('Course', courseSchema)
