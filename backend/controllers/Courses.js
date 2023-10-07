@@ -1,11 +1,11 @@
 const Course = require('../models/Course')
 const uploadImageCloudinary = require('../Utils/imageUploader')
 const User = require('../models/userModel')
-const Tag = require('../models/Tag')
+const Category = require('../models/Category')
 
 exports.createCourse = async(req, res) => {
     try{
-        const {courseName, courseDescription,whatYouWillLearn, tag, price} = req.body;
+        const {courseName, courseDescription, whatYouWillLearn, tags, price, category, status, instructions} = req.body;
 
         //Image to be uploaded
         const thumbnail = req.files.thumbnailImage;
@@ -17,10 +17,14 @@ exports.createCourse = async(req, res) => {
             })
         }
 
+        if(!status || status === undefined){
+            status = 'Draft'
+        }
+
 
         // Check for the instructor details
-        const instructorId = req.user.id;
-        const instructorDetails = await User.findById({instructorId})
+        const userId = req.user.id;
+        const instructorDetails = await User.findById(userId, {accountType : 'Instructor'});
 
         if(!instructorDetails){
             return res.status(400).json({
@@ -30,12 +34,12 @@ exports.createCourse = async(req, res) => {
         }
 
         // Validate if the tag is correct or not
-        const tagDetails = await Tag.findById({tag})
+        const categoryDetails = await Category.findById(category)
 
-        if(!tagDetails){
+        if(!categoryDetails){
             return res.status(400).json({
                 success : false,
-                message : 'Tag not found'
+                message : 'Category not found'
             })
         }
 
@@ -43,17 +47,20 @@ exports.createCourse = async(req, res) => {
 
         const newCourse = await Course.create({
             courseName,
-            courseContent,
-            whatYouWillLearn,
+            courseDescription,
+            whatYouWillLearn : whatYouWillLearn,
             price,
-            instructor : instructorId,
-            tags : tagDetails._id,
-            thumbnail : thumbnailImage.secure_url
+            tag : tags,
+            instructor : instructorDetails._id,
+            categories : categoryDetails._id,
+            thumbnail : thumbnailImage.secure_url,
+            status : status, 
+            instructions : instructions
         })
 
         //Updates the courses of user schema
         await User.findByIdAndUpdate(
-            {_id : instructorId},
+            {_id : instructorDetails._id},
             {
                 $push : {
                     courses : newCourse._id,
@@ -63,8 +70,8 @@ exports.createCourse = async(req, res) => {
         )
         
         // Update the tag  schema
-        await Tag.findByIdAndUpdate(
-            {_id : tagDetails._id},
+        await Category.findByIdAndUpdate(
+            {_id : category},
             {
                 $push : {
                     courses : newCourse._id,
@@ -87,10 +94,19 @@ exports.createCourse = async(req, res) => {
     }
 }
 
-exports.showAllCourses = async (req, res) => {
+exports.getAllCourses = async (req, res) => {
     try {
             //TODO: change the below statement incrementally
-            const allCourses = await Course.find({});
+            const allCourses = await Course.find({},{
+                courseName: true,
+				price: true,
+				thumbnail: true,
+				instructor: true,
+				ratingAndReviews: true,
+				studentsEnroled: true,
+            })
+            .populate("instructor")
+			.exec();
 
             return res.status(200).json({
                 success:true,
@@ -108,3 +124,5 @@ exports.showAllCourses = async (req, res) => {
         })
     }
 }
+
+//TODO : getCourseDetails

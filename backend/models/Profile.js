@@ -16,8 +16,8 @@ const profileSchema = new mongoose.Schema({
         type : String,
         trim : true
     },
-    college : {
-        type : String,
+    contactNumber: {
+        type : Number,
         trim : true
     }
 })

@@ -102,7 +102,7 @@ exports.signUp = async(req, res) => {
                 success : false,
                 message : 'OTP not found'
             })
-        } else if(otp !== recentOTP){
+        } else if(otp !== recentOTP[0].otp){
             return res.status(400).json({
                 success : false,
                 message : 'Invalid OTP'
@@ -110,6 +110,9 @@ exports.signUp = async(req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+
+        let approved = '';
+        approved === 'Instructor' ? (approved = false) : (approved = true)
 
         // Create a entry in the db
         const profileDetails = await Profile.create({
@@ -124,7 +127,8 @@ exports.signUp = async(req, res) => {
             phone,
             password : hashedPassword,
             email,
-            accountType,
+            accountType : accountType,
+            approved : approved,
             image : `https://api.dicebear.com/7.x/bottts/jpg`,
             additionalDetails: profileDetails._id
         })
@@ -154,7 +158,7 @@ exports.login = async(req, res) => {
             })
         }
 
-        const existingUser = await User.findOne({email})
+        const existingUser = await User.findOne({email}).populate('additionalDetails');
         if(!existingUser){
             return res.status(400).json({
                 success : false,
@@ -172,11 +176,16 @@ exports.login = async(req, res) => {
             }
 
             const token = jwt.sign(payload,process.env.JWT_SECRET,{
-                expiresIn : '2h'
+                expiresIn : '24h'
             })
 
             existingUser.token = token;
             existingUser.password = undefined;
+
+            const options = {
+				expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+				httpOnly: true,
+			};
 
             res.cookie('token', token, options).status(200).json({
                 success : true,
@@ -205,26 +214,31 @@ exports.changePassword = async(req, res) => {
             })
         }
         
-        const user = await User.findOne({email});
+        const user = await User.findById(req.user.id);
 
         const match=bcrypt.compare(oldPassword, user.password)
-        if(match){
-            if(newPassword !== confirmPassword){
-                return res.status(400).json({
-                    success : false,
-                    message : 'New passwords do not match'
-                })
-            }
+        if(!match){
+            // If old password does not match, return a 401 (Unauthorized) error
+			return res
+            .status(401)
+            .json({ success: false, message: "The password is incorrect" });
+        }
 
-            const hashedPassword = await bcrypt.hash(newPassword, 10);
-            const updated = await User.findOneAndUpdate({email: email},{ password : hashedPassword}, {new : true});
-
-            res.status(200).json({
-                success : true,
-                user,
-                message : 'Password changed successfully'
+        if(newPassword !== confirmPassword){
+            return res.status(400).json({
+                success : false,
+                message : 'New passwords do not match'
             })
         }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        const updated = await User.findByIdAndUpdate(req.user.id,{ password : hashedPassword}, {new : true});
+
+        res.status(200).json({
+            success : true,
+            user,
+            message : 'Password changed successfully'
+        })
     } catch(error){
         console.log(error);
         return res.status(400).json({

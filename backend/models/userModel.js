@@ -30,6 +30,14 @@ const userSchema = new mongoose.Schema({
         ref : 'Profile',
         required : true
     },
+    active : {
+        type : Boolean,
+        default : true
+    },
+    approved : {
+        type : Boolean,
+        default : true
+    },
     phone : {
         type : Number,
         trim : true
@@ -56,6 +64,8 @@ const userSchema = new mongoose.Schema({
             ref : 'CourseProgress'
         }
     ]
-})
+}, {timestamps : true}
+
+)
 
 module.exports = mongoose.model('User', userSchema)
