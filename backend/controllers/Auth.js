@@ -233,7 +233,10 @@ exports.changePassword = async(req, res) => {
 
         const hashedPassword = await bcrypt.hash(newPassword, 10);
         const updated = await User.findByIdAndUpdate(req.user.id,{ password : hashedPassword}, {new : true});
+        
 
+        //TODO : Implement the mailsender functionality upon password changge
+        
         res.status(200).json({
             success : true,
             user,
