@@ -5,6 +5,8 @@ const Profile = require('../models/Profile')
 const otpGenerator = require('otp-generator')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+const mailSender = require('../Utils/mailSender')
+const { passwordUpdated } = require('../mail/templates/passwordUpdate')
 
 exports.sendOTP = async(req, res) => {
     try{
@@ -236,7 +238,24 @@ exports.changePassword = async(req, res) => {
         
 
         //TODO : Implement the mailsender functionality upon password changge
-        
+        try{
+            const emailResponse = await mailSender(
+                updated.email,
+                passwordUpdated(
+                    updated.email,
+                    `Password updated successfully for ${updated.firstName} ${updated.lastName}`
+                )
+            )
+
+            console.log('Email sent successfully', emailResponse.response);
+        } catch(error) {
+            console.log('Error occured while sending the email', error);
+            return res.status(500).json({
+                success : false,
+                message : 'Something went wrong while sending the email',
+                error : error.message
+            })
+        }
         res.status(200).json({
             success : true,
             user,

@@ -1,6 +1,8 @@
 const Profile = require('../models/Profile')
 const User = require('../models/userModel')
 const Course = require('../models/Course')
+const {uploadImageCloudinary} = require('../Utils/imageUploader')
+
 
 exports.updateProfile = async(req, res) => {
     try{
@@ -96,5 +98,56 @@ exports.getAllUserDetails = async (req, res) => {
             success:false,
             message:error.message,
         });
+    }
+}
+
+exports.updateProfilePicture = async(req, res) => {
+    try{
+        const userId = req.user.id;
+        const picture = req.files.profilePicture;
+
+        const image = await uploadImageCloudinary(picture, process.env.FOLDER_NAME);
+
+        const userDetails = await User.findByIdAndUpdate({_id : userId},
+                                                        {
+                                                            image : image.secure_url
+                                                        },
+                                                        {new : true});
+        
+        return res.status(200).json({
+            success : true,
+            message : 'Image updated successfully',
+            data : userDetails
+        })
+    } catch(error) {
+        return res.status(500).json({
+            success: false,
+            message: error.message,
+          })
+    }
+}
+
+exports.getEnrolledCourses = async(req, res) => {
+    try{
+        const userId = req.user.id;
+        const findCourses = await User.findOne({_id : userId}).populate('courses').exec();
+
+        if(!findCourses){
+            return res.status(404).json({
+                success : false,
+                message : 'No courses found'
+            })
+        }
+
+        return res.status(200).json({
+            success : true,
+            data : findCourses.courses
+        })
+    } catch(error) {
+        console.log(error);
+        return res.status(500).json({
+            success : false,
+            message : error.message 
+        })
     }
 }
