@@ -70,7 +70,9 @@ exports.categoryPageDetails = async(req, res) => {
             })
         }
 
-        const differentCategories = await Category.findById({_id : {$ne : categoryId}}).populate('courses').exec();
+        const differentCategories = await Category.find({_id : {$ne : categoryId}}).populate('courses').exec();
+
+        console.log(differentCategories);
 
         const differentCourses = [];
         for(const category of differentCategories){

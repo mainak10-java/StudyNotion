@@ -1,22 +1,23 @@
 const Course = require('../models/Course')
-const uploadImageCloudinary = require('../Utils/imageUploader')
+const {uploadImageCloudinary} = require('../Utils/imageUploader')
 const User = require('../models/userModel')
 const Category = require('../models/Category')
 
 exports.createCourse = async(req, res) => {
     try{
-        const {courseName, courseDescription, whatYouWillLearn, tags, price, category, status, instructions} = req.body;
+        let {courseName, courseDescription, whatYouWillLearn, tags, price, category, status, instructions} = req.body;
 
         //Image to be uploaded
         const thumbnail = req.files.thumbnailImage;
 
-        if(!courseName || !courseDescription || !whatYouWillLearn || !tag || !price || !thumbnail){
+        if(!courseName || !courseDescription || !whatYouWillLearn || !category || !price || !thumbnail){
             return res.status(400).json({
                 success : false,
                 message : 'All fields are required'
             })
         }
-
+        
+        console.log(status);
         if(!status || status === undefined){
             status = 'Draft'
         }
@@ -81,15 +82,17 @@ exports.createCourse = async(req, res) => {
         )
 
         res.status(200).json({
-            success : false,
-            message : 'Course created successfully'
+            success : true,
+            message : 'Course created successfully',
+            newCourse
         })
 
     } catch(error){
         console.log(error);
         return res.status(400).json({
             success : false,
-            message : 'Something went wrong, while creating the course'
+            message : 'Something went wrong, while creating the course',
+            message: error.message
         })
     }
 }
@@ -151,13 +154,14 @@ exports.getCourseDetails = async(req, res) => {
         if(!courseDetails){
             return res.status(400).json({
                 success : false,
-                message : `Could not find course details with ${courseId}`
+                message : `Could not find course details with ${courseId}`,
             })
         }
 
         return res.status(200).json({
             success : true,
-            message : 'Course details fetched successfully'
+            message : 'Course details fetched successfully',
+            data : courseDetails
         })
     } catch(error){
         console.log(error);
